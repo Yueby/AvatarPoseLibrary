@@ -6,9 +6,11 @@ using VRC.SDK3.Avatars.ScriptableObjects;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace com.hhotatea.avatar_pose_library.model {
+namespace com.hhotatea.avatar_pose_library.model
+{
     [Serializable]
-    public class TrackingSetting {
+    public class TrackingSetting
+    {
         public bool head = true;
         public bool arm = true;
         public bool foot = true;
@@ -20,7 +22,8 @@ namespace com.hhotatea.avatar_pose_library.model {
     }
 
     [Serializable]
-    public class PoseEntry {
+    public class PoseEntry
+    {
         public string name;
         public bool autoThumbnail;
         public Texture2D thumbnail;
@@ -38,8 +41,9 @@ namespace com.hhotatea.avatar_pose_library.model {
         public int Value { get; set; }
         public int Index { get; set; }
 
-        public int[] GetAnimatorFlag () {
-            return new [] {
+        public int[] GetAnimatorFlag()
+        {
+            return new[] {
                 Index & 0xFF, // 0‒7 ビット目
                     (Index >> 8) & 0xFF, // 8‒15 ビット目
                     /*(Index >> 16) & 0xFF,  // 16‒23 ビット目
@@ -49,18 +53,21 @@ namespace com.hhotatea.avatar_pose_library.model {
     }
 
     [Serializable]
-    public class PoseCategory {
+    public class PoseCategory
+    {
         public string name;
         public Texture2D thumbnail;
-        public List<PoseEntry> poses = new List<PoseEntry> ();
+        public List<PoseEntry> poses = new List<PoseEntry>();
         public VRCExpressionsMenu target = null;
+        public bool isPoseListExpanded = true;
     }
 
     [Serializable]
-    public class AvatarPoseData {
+    public class AvatarPoseData
+    {
         public string name = "";
         public Texture2D thumbnail;
-        public List<PoseCategory> categories = new List<PoseCategory> ();
+        public List<PoseCategory> categories = new List<PoseCategory>();
         public bool enableHeightParam = true;
         public bool enableSpeedParam = true;
         public bool enableMirrorParam = true;
@@ -78,9 +85,10 @@ namespace com.hhotatea.avatar_pose_library.model {
         // システムが使用
         public string Guid { get; set; }
         public List<string> Parameters =>
-            categories.SelectMany (c => {
-                return c.poses.Select (p => p.Parameter);
-            }).Distinct ().ToList ();
+            categories.SelectMany(c =>
+            {
+                return c.poses.Select(p => p.Parameter);
+            }).Distinct().ToList();
 
         public int PoseCount => categories.Sum(cat => cat.poses.Count);
         public bool EnableAudioMode =>
@@ -92,14 +100,18 @@ namespace com.hhotatea.avatar_pose_library.model {
         /// パラメーターの最適化
         /// 0906コミットにより、決定論的に動作
         /// </summary>
-        public AvatarPoseData UpdateParameter (){
+        public AvatarPoseData UpdateParameter()
+        {
             Guid = ToHash();
             int paramCount = 999;
             int paramIndex = 1;
             string paramName = "";
-            foreach (var category in categories) {
-                foreach (var pose in category.poses) {
-                    if (paramCount > ConstVariables.MaxAnimationState) {
+            foreach (var category in categories)
+            {
+                foreach (var pose in category.poses)
+                {
+                    if (paramCount > ConstVariables.MaxAnimationState)
+                    {
                         paramName = $"AnimPose_{Guid}_{paramIndex}";
                         paramCount = 1;
                     }
@@ -119,16 +131,19 @@ namespace com.hhotatea.avatar_pose_library.model {
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static List<AvatarPoseData> Combine (AvatarPoseData[] data) {
-            var result = new List<AvatarPoseData> ();
-            var ps = data.Select (d => d.name).Distinct ().ToArray ();
-            foreach (var t in ps) {
-                var apd = new AvatarPoseData ();
+        public static List<AvatarPoseData> Combine(AvatarPoseData[] data)
+        {
+            var result = new List<AvatarPoseData>();
+            var ps = data.Select(d => d.name).Distinct().ToArray();
+            foreach (var t in ps)
+            {
+                var apd = new AvatarPoseData();
                 apd.name = t;
-                foreach (var d in data) {
+                foreach (var d in data)
+                {
                     if (d.name != apd.name) continue;
                     if (d.target != null) continue;
-                    if(!apd.thumbnail)
+                    if (!apd.thumbnail)
                     {
                         // 変数の同期
                         apd.thumbnail = d.thumbnail;
@@ -146,16 +161,18 @@ namespace com.hhotatea.avatar_pose_library.model {
                     apd.categories.AddRange(d.categories);
                 }
 
-                if (apd.categories.Count > 0) {
-                    apd.UpdateParameter ();
-                    result.Add (apd);
+                if (apd.categories.Count > 0)
+                {
+                    apd.UpdateParameter();
+                    result.Add(apd);
                 }
             }
 
-            foreach (var apd in data) {
+            foreach (var apd in data)
+            {
                 if (apd.target == null) continue;
-                apd.UpdateParameter ();
-                result.Add (apd);
+                apd.UpdateParameter();
+                result.Add(apd);
             }
 
             return result;
@@ -173,11 +190,12 @@ namespace com.hhotatea.avatar_pose_library.model {
             var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(json ?? ""));
             var sb = new StringBuilder(bytes.Length * 2);
             foreach (var b in bytes) sb.AppendFormat("{0:x2}", b);
-            return sb.ToString ().Substring (0, ConstVariables.HashLong);
+            return sb.ToString().Substring(0, ConstVariables.HashLong);
         }
     }
 
-    public enum WriteDefaultType {
+    public enum WriteDefaultType
+    {
         MatchAvatar,
         OverrideTrue,
         OverrideFalse

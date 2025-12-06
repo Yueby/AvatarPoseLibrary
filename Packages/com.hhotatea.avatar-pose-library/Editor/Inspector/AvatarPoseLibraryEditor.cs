@@ -97,6 +97,20 @@ namespace com.hhotatea.avatar_pose_library.editor
             _foldout[p] = value;
         }
 
+        bool GetCategoryFoldout(int catIdx)
+        {
+            var key = $"cat_{catIdx}";
+            _foldout.TryAdd(key, true);
+            return _foldout[key];
+        }
+
+        void SetCategoryFoldout(int catIdx, bool value)
+        {
+            var key = $"cat_{catIdx}";
+            _foldout.TryAdd(key, true);
+            _foldout[key] = value;
+        }
+
         string GetParameter(PoseEntry pose)
         {
             if (String.IsNullOrWhiteSpace(pose.Parameter))
@@ -528,8 +542,7 @@ namespace com.hhotatea.avatar_pose_library.editor
         private float GetCategoryHeight(int i)
         {
             var list = EnsurePoseList(i, FindData($"categories.Array.data[{i}].poses"));
-            var category = Data.categories[i];
-            var listHeight = category.isPoseListExpanded ? list.GetHeight() : 0f;
+            var listHeight = GetCategoryFoldout(i) ? list.GetHeight() : 0f;
             return _lineHeight + 8f + Mathf.Max(_lineHeight * 5, _lineHeight) + _lineHeight + listHeight + 60f;
         }
 
@@ -715,23 +728,24 @@ namespace com.hhotatea.avatar_pose_library.editor
             y += _lineHeight + Spacing;
 
             var category = Data.categories[index];
-            var headerRect = new Rect(rect.x, y, rect.width, _lineHeight);
             var foldoutRect = new Rect(rect.x, y, 200f, _lineHeight);
-            bool newExpanded = EditorGUI.Foldout(foldoutRect, category.isPoseListExpanded, _poseListLabel, true);
-            if (newExpanded != category.isPoseListExpanded)
+            bool isExpanded = GetCategoryFoldout(index);
+            bool newExpanded = EditorGUI.Foldout(foldoutRect, isExpanded, _poseListLabel, true);
+            if (newExpanded != isExpanded)
             {
-                Apply("Toggle Pose List", () => category.isPoseListExpanded = newExpanded);
+                SetCategoryFoldout(index, newExpanded);
             }
 
             var poseCount = category.poses.Count;
-            var countLabel = $"({poseCount})";
-            var countStyle = EditorStyles.miniLabel;
-            var countSize = countStyle.CalcSize(new GUIContent(countLabel));
+            var countLabel = $"{poseCount}";
+            var badgeStyle = new GUIStyle("Badge");
+            var countSize = badgeStyle.CalcSize(new GUIContent(countLabel));
             var countRect = new Rect(rect.x + rect.width - countSize.x - 4f, y, countSize.x, _lineHeight);
-            GUI.Label(countRect, countLabel, countStyle);
+
+            GUI.Box(countRect, countLabel, badgeStyle);
 
             y += _lineHeight + Spacing;
-            if (category.isPoseListExpanded)
+            if (isExpanded)
             {
                 var list = EnsurePoseList(index, poses);
                 list.DoList(new Rect(rect.x, y, rect.width, list.GetHeight()));
